@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>B-2 Spirit Interactive || by Aniketh A R</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+
+/* ---------------------------------------------
+   ok so i built this cuz i love the b2 spirit lol
+   dont judge my css im not a designer
+   colors picked at 1am, dont ask why
+---------------------------------------------- */
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin:0;
+  padding:0;
+  background: #05070a;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  overflow-x: hidden;
+  color: #e8eef2;
+}
+
+/* bg stars thing bcuz why not, looks cool */
+#starfield{
+  position:fixed;
+  top:0;left:0;
+  width:100%;
+  height:100%;
+  z-index:-2;
+  background:#05070a;
+}
+
+.star{
+  position:absolute;
+  background:#fff;
+  border-radius:50%;
+  opacity:.7;
+  animation: twinkle 3s infinite ease-in-out;
+}
+@keyframes twinkle{
+  0%,100%{opacity:.2;}
+  50%{opacity:1;}
+}
+
+/* faint radial glow behind the jet, adds "aesthetic" i guess */
+.glowBG{
+  position:fixed;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:900px;
+  height:900px;
+  background: radial-gradient(circle, rgba(40,90,140,0.25) 0%, rgba(5,7,10,0) 70%);
+  z-index:-1;
+  pointer-events:none;
+}
+
+header{
+  text-align:center;
+  padding: 28px 10px 10px 10px;
+}
+
+header h1{
+  margin:0;
+  font-size: 2.1rem;
+  letter-spacing: 2px;
+  background: linear-gradient(90deg,#7fd7ff,#c8e8ff,#7fd7ff);
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+  text-shadow: 0 0 30px rgba(120,200,255,.25);
+  font-weight:700;
+}
+header p{
+  color:#8ea3b0;
+  margin:6px 0 0 0;
+  font-size:.85rem;
+  letter-spacing:1px;
+}
+
+/* main stage where the plane lives */
+#stage{
+  position:relative;
+  width: 100%;
+  max-width: 980px;
+  margin: 10px auto 0 auto;
+  height: 560px;
+  perspective: 1400px;
+  touch-action: none;
+}
+
+#planeWrap{
+  width:100%;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transform-style:preserve-3d;
+  transition: transform .05s linear;
+  cursor:grab;
+}
+#planeWrap:active{ cursor:grabbing; }
+
+/* the floaty hover animation - just moves up down a lil */
+@keyframes floaty {
+  0%   { margin-top: 0px; }
+  50%  { margin-top: -18px; }
+  100% { margin-top: 0px; }
+}
+
+#planeSvgHolder{
+  animation: floaty 4.5s ease-in-out infinite;
+  filter: drop-shadow(0px 25px 25px rgba(0,0,0,0.55)) drop-shadow(0 0 40px rgba(90,160,220,.15));
+}
+
+svg#b2 { width: 780px; max-width:92vw; height:auto; overflow:visible; }
+
+/* the hotspot dots - pulsing lil circles */
+.hotspot{
+  cursor:pointer;
+}
+.hotspot circle.pulse{
+  fill: rgba(255,90,90,.35);
+  animation: pulseAnim 1.8s infinite;
+}
+.hotspot circle.dot{
+  fill:#ff5050;
+  stroke:#fff;
+  stroke-width:1.4;
+}
+@keyframes pulseAnim{
+  0%{ r:6; opacity:.9; }
+  70%{ r:16; opacity:0; }
+  100%{ r:16; opacity:0; }
+}
+.hotspot:hover circle.dot{
+  fill:#66e0ff;
+}
+
+/* controls under the plane */
+#controls{
+  max-width:980px;
+  margin: 6px auto 30px auto;
+  padding: 14px 22px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:18px;
+  align-items:center;
+  justify-content:center;
+  background: rgba(255,255,255,0.03);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:14px;
+  backdrop-filter: blur(6px);
+}
+
+.ctrlGroup{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  font-size:.8rem;
+  color:#9fb4c2;
+}
+input[type=range]{
+  width:180px;
+  accent-color:#4fb9ff;
+}
+.smallBtn{
+  background: linear-gradient(180deg,#1c2733,#131b23);
+  border:1px solid rgba(255,255,255,.12);
+  color:#cfe8f7;
+  padding:7px 14px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:.78rem;
+  letter-spacing:.5px;
+  transition: all .15s;
+}
+.smallBtn:hover{
+  background: linear-gradient(180deg,#26374a,#182530);
+  border-color:#4fb9ff;
+  transform: translateY(-1px);
+}
+
+/* the popup card */
+#infoOverlay{
+  display:none;
+  position:fixed;
+  top:0;left:0;
+  width:100%;
+  height:100%;
+  background: rgba(2,4,7,0.72);
+  z-index:999;
+  align-items:center;
+  justify-content:center;
+  backdrop-filter: blur(3px);
+}
+#infoCard{
+  width: 420px;
+  max-width: 88vw;
+  background: linear-gradient(160deg, #0e161d, #0a1015 70%);
+  border: 1px solid rgba(120,190,255,.25);
+  border-radius: 16px;
+  padding: 22px 24px 18px 24px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.02) inset;
+  position:relative;
+  animation: popIn .22s ease;
+}
+@keyframes popIn{
+  from{ transform:scale(.9); opacity:0; }
+  to{ transform:scale(1); opacity:1; }
+}
+#infoCard h2{
+  margin:0 0 4px 0;
+  font-size:1.25rem;
+  color:#7fd7ff;
+}
+#infoCard .tag{
+  display:inline-block;
+  font-size:.65rem;
+  letter-spacing:1px;
+  color:#8ea3b0;
+  background: rgba(127,215,255,.08);
+  border:1px solid rgba(127,215,255,.2);
+  padding:2px 8px;
+  border-radius:20px;
+  margin-bottom:10px;
+}
+#infoCard p{
+  font-size:.9rem;
+  line-height:1.5;
+  color:#c7d5dd;
+}
+#closeBtn{
+  position:absolute;
+  top:12px;
+  right:14px;
+  background:none;
+  border:none;
+  color:#8ea3b0;
+  font-size:1.3rem;
+  cursor:pointer;
+  line-height:1;
+}
+#closeBtn:hover{ color:#ff5050; }
+
+/* footer / watermark thing */
+footer{
+  text-align:center;
+  font-size:.7rem;
+  color:#5b6b76;
+  padding: 10px 10px 30px 10px;
+  letter-spacing:.5px;
+}
+footer span{
+  color:#7fd7ff;
+}
+
+/* mobile tweaks bcuz chromebook + touch probably */
+@media (max-width:600px){
+  header h1{ font-size:1.4rem; }
+  #stage{ height:420px; }
+  svg#b2{ width:640px; }
+  input[type=range]{ width:120px; }
+}
+</style>
+</head>
+<body>
+
+<div id="starfield"></div>
+<div class="glowBG"></div>
+
+<header>
+  <h1>NORTHROP GRUMMAN B-2 SPIRIT</h1>
+  <p>// interactive stealth bomber viewer — click the red dots for info //</p>
+</header>
+
+<div id="stage">
+  <div id="planeWrap">
+    <div id="planeSvgHolder">
+
+<!-- ok this svg is my attempt at drawing the b2 from top view, flying wing shape -->
+<svg id="b2" viewBox="0 0 800 420" xmlns="http://www.w3.org/2000/svg">
+
+  <defs>
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3a4750"/>
+      <stop offset="55%" stop-color="#22282d"/>
+      <stop offset="100%" stop-color="#14181b"/>
+    </linearGradient>
+    <linearGradient id="wingGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2b3338"/>
+      <stop offset="50%" stop-color="#3d4850"/>
+      <stop offset="100%" stop-color="#2b3338"/>
+    </linearGradient>
+    <radialGradient id="cockpitGlass" cx="40%" cy="30%" r="80%">
+      <stop offset="0%" stop-color="#9fe8ff"/>
+      <stop offset="60%" stop-color="#2f6a80"/>
+      <stop offset="100%" stop-color="#0e2530"/>
+    </radialGradient>
+  </defs>
+
+  <!-- main flying wing body, the classic B2 kite/boomerang shape -->
+  <path d="M400,40
+           L560,120
+           L780,230
+           L680,255
+           L560,220
+           L470,300
+           L430,380
+           L400,300
+           L370,380
+           L330,300
+           L240,220
+           L120,255
+           L20,230
+           L240,120
+           Z"
+        fill="url(#wingGrad)" stroke="#0a0d0f" stroke-width="3"/>
+
+  <!-- center body hump -->
+  <path d="M400,45 L455,110 L470,250 L400,290 L330,250 L345,110 Z"
+        fill="url(#bodyGrad)" stroke="#0a0d0f" stroke-width="2.5"/>
+
+  <!-- cockpit -->
+  <path d="M400,55 L432,100 L400,125 L368,100 Z"
+        fill="url(#cockpitGlass)" stroke="#0a0d0f" stroke-width="1.5"/>
+
+  <!-- panel lines just for detail, dont mean anything lol -->
+  <path d="M400,125 L400,290" stroke="#0a0d0f" stroke-width="1" opacity="0.5"/>
+  <path d="M345,110 L470,110" stroke="#0a0d0f" stroke-width="1" opacity="0.4"/>
+  <path d="M240,120 L400,40" stroke="#0a0d0f" stroke-width="1" opacity="0.35"/>
+  <path d="M560,120 L400,40" stroke="#0a0d0f" stroke-width="1" opacity="0.35"/>
+
+  <!-- exhaust / engine nozzles at the back, there's 4 engines total (2 each side) -->
+  <rect x="360" y="240" width="18" height="35" rx="3" fill="#0e1214" stroke="#000" stroke-width="1"/>
+  <rect x="422" y="240" width="18" height="35" rx="3" fill="#0e1214" stroke="#000" stroke-width="1"/>
+
+  <!-- engine intakes on top of wing root -->
+  <ellipse cx="360" cy="150" rx="22" ry="12" fill="#181d20" stroke="#000" stroke-width="1"/>
+  <ellipse cx="440" cy="150" rx="22" ry="12" fill="#181d20" stroke="#000" stroke-width="1"/>
+
+  <!-- weapons bay outline, center belly -->
+  <rect x="378" y="190" width="44" height="60" rx="4" fill="#1a2024" stroke="#000" stroke-width="1" opacity="0.8"/>
+
+  <!-- wingtip trailing edges (sawtooth look, iconic b2 detail) -->
+  <path d="M20,230 L60,225 L55,235 L90,232 L85,240 L120,255"
+        fill="none" stroke="#0a0d0f" stroke-width="1.5" opacity="0.6"/>
+  <path d="M780,230 L740,225 L745,235 L710,232 L715,240 L680,255"
+        fill="none" stroke="#0a0d0f" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- ===================== HOTSPOTS ===================== -->
+  <!-- cockpit -->
+  <g class="hotspot" data-info="cockpit">
+    <circle class="pulse" cx="400" cy="85" r="6"/>
+    <circle class="dot" cx="400" cy="85" r="6"/>
+  </g>
+
+  <!-- engine intake left -->
+  <g class="hotspot" data-info="intake">
+    <circle class="pulse" cx="360" cy="150" r="6"/>
+    <circle class="dot" cx="360" cy="150" r="6"/>
+  </g>
+
+  <!-- engine intake right -->
+  <g class="hotspot" data-info="intake2">
+    <circle class="pulse" cx="440" cy="150" r="6"/>
+    <circle class="dot" cx="440" cy="150" r="6"/>
+  </g>
+
+  <!-- weapons bay -->
+  <g class="hotspot" data-info="bay">
+    <circle class="pulse" cx="400" cy="220" r="6"/>
+    <circle class="dot" cx="400" cy="220" r="6"/>
+  </g>
+
+  <!-- exhaust left -->
+  <g class="hotspot" data-info="exhaust">
+    <circle class="pulse" cx="369" cy="260" r="6"/>
+    <circle class="dot" cx="369" cy="260" r="6"/>
+  </g>
+
+  <!-- exhaust right (combustion chamber ref goes here too) -->
+  <g class="hotspot" data-info="combustion">
+    <circle class="pulse" cx="431" cy="260" r="6"/>
+    <circle class="dot" cx="431" cy="260" r="6"/>
+  </g>
+
+  <!-- left wing structure -->
+  <g class="hotspot" data-info="wingL">
+    <circle class="pulse" cx="180" cy="200" r="6"/>
+    <circle class="dot" cx="180" cy="200" r="6"/>
+  </g>
+
+  <!-- right wing structure -->
+  <g class="hotspot" data-info="wingR">
+    <circle class="pulse" cx="620" cy="200" r="6"/>
+    <circle class="dot" cx="620" cy="200" r="6"/>
+  </g>
+
+  <!-- leading edge sawtooth -->
+  <g class="hotspot" data-info="sawtooth">
+    <circle class="pulse" cx="90" cy="232" r="6"/>
+    <circle class="dot" cx="90" cy="232" r="6"/>
+  </g>
+
+</svg>
+
+    </div>
+  </div>
+</div>
+
+<div id="controls">
+  <div class="ctrlGroup">
+    <label for="rotY">rotate Y</label>
+    <input type="range" id="rotY" min="-60" max="60" value="0">
+  </div>
+  <div class="ctrlGroup">
+    <label for="rotX">tilt X</label>
+    <input type="range" id="rotX" min="-30" max="30" value="10">
+  </div>
+  <button class="smallBtn" id="resetBtn">RESET VIEW</button>
+  <button class="smallBtn" id="spinBtn">AUTO-SPIN: OFF</button>
+</div>
+
+<footer>
+  made by <span>Aniketh A R</span> — B-2 Spirit fan project, not affiliated w/ Northrop Grumman lol
+</footer>
+
+<!-- popup overlay -->
+<div id="infoOverlay">
+  <div id="infoCard">
+    <button id="closeBtn">&times;</button>
+    <span class="tag" id="infoTag">PART INFO</span>
+    <h2 id="infoTitle">Title here</h2>
+    <p id="infoBody">Body text here</p>
+  </div>
+</div>
+
+<script>
+// -------------------------------------------------------
+// alright js time. sorry in advance for the mess
+// i wrote most of this at like 2am so yea
+// -------------------------------------------------------
+
+// gen some random stars for the bg, hacky but works
+(function makeStars(){
+  var sf = document.getElementById('starfield');
+  var n = 90;
+  for(var i=0;i<n;i++){
+    var s = document.createElement('div');
+    s.className='star';
+    var size = Math.random()*2+1;
+    s.style.width = size+'px';
+    s.style.height = size+'px';
+    s.style.top = Math.random()*100+'%';
+    s.style.left = Math.random()*100+'%';
+    s.style.animationDelay = (Math.random()*3)+'s';
+    sf.appendChild(s);
+  }
+})();
+
+// info data - all the part descriptions
+var infoData = {
+  cockpit: {
+    tag: "CREW COMPARTMENT",
+    title: "Cockpit",
+    body: "The B-2 has a two-person crew seated side by side, with a raised platform behind for a possible third crew member on longer missions. Extensive automation lets just two pilots handle a 30+ hour mission if needed."
+  },
+  intake: {
+    tag: "PROPULSION",
+    title: "Engine Air Intake (Left)",
+    body: "Air is drawn in through S-shaped ducts on top of the wing. This hides the engine fan blades from radar looking up from below, a key part of the B-2's low-observable design."
+  },
+  intake2: {
+    tag: "PROPULSION",
+    title: "Engine Air Intake (Right)",
+    body: "Mirrors the left intake. The B-2 uses four General Electric F118-GE-100 turbofans, each producing about 17,300 lbf of thrust, buried inside the wing to reduce radar and infrared signature."
+  },
+  bay: {
+    tag: "PAYLOAD",
+    title: "Weapons Bay",
+    body: "Two internal bays can carry up to roughly 40,000 lbs of ordnance, including JDAMs, gravity bombs, or (in older configurations) nuclear weapons. Keeping weapons internal is critical for maintaining stealth."
+  },
+  exhaust: {
+    tag: "PROPULSION",
+    title: "Exhaust Nozzle (Left)",
+    body: "Exhaust is vented through flattened, shielded nozzles on top of the wing to mask the engines' heat signature from infrared-seeking missiles and ground-based sensors."
+  },
+  combustion: {
+    tag: "PROPULSION",
+    title: "Combustion Chamber / Exhaust (Right)",
+    body: "Inside each F118 engine, compressed air mixes with jet fuel in the combustion chamber and ignites, producing high-pressure gas that spins the turbine and generates thrust, then exits through the shielded rear nozzle."
+  },
+  wingL: {
+    tag: "AIRFRAME",
+    title: "Left Wing Structure",
+    body: "The B-2 uses a flying wing design with no separate fuselage or tail. This shape is aerodynamically efficient and drastically reduces radar cross-section compared to conventional aircraft."
+  },
+  wingR: {
+    tag: "AIRFRAME",
+    title: "Right Wing Structure",
+    body: "Composite materials and radar-absorbent coatings cover the wing surface. Elevons along the trailing edge handle both roll and pitch control since there's no traditional tail."
+  },
+  sawtooth: {
+    tag: "STEALTH DESIGN",
+    title: "Sawtooth Trailing Edge",
+    body: "The zigzag trailing edges align reflected radar waves into narrow beams pointed away from the emitting radar, instead of scattering them back, a major contributor to the B-2's stealth."
+  }
+};
+
+var overlay = document.getElementById('infoOverlay');
+var infoTitle = document.getElementById('infoTitle');
+var infoBody = document.getElementById('infoBody');
+var infoTag = document.getElementById('infoTag');
+
+// attach click listeners to all hotspots
+var spots = document.querySelectorAll('.hotspot');
+for(var i=0;i<spots.length;i++){
+  spots[i].addEventListener('click', function(e){
+    var key = this.getAttribute('data-info');
+    var d = infoData[key];
+    if(!d) return; // just in case i messed up a key somewhere
+    infoTitle.textContent = d.title;
+    infoBody.textContent = d.body;
+    infoTag.textContent = d.tag;
+    overlay.style.display = 'flex';
+  });
+}
+
+document.getElementById('closeBtn').addEventListener('click', function(){
+  overlay.style.display = 'none';
+});
+// close on clicking outside the card too
+overlay.addEventListener('click', function(e){
+  if(e.target === overlay){
+    overlay.style.display = 'none';
+  }
+});
+
+// ---------------- rotation stuff ----------------
+var planeWrap = document.getElementById('planeWrap');
+var rotYSlider = document.getElementById('rotY');
+var rotXSlider = document.getElementById('rotX');
+
+var curRotY = 0;
+var curRotX = 10;
+
+function applyRot(){
+  planeWrap.style.transform = 'rotateX('+curRotX+'deg) rotateY('+curRotY+'deg)';
+}
+applyRot();
+
+rotYSlider.addEventListener('input', function(){
+  curRotY = parseInt(this.value);
+  applyRot();
+});
+rotXSlider.addEventListener('input', function(){
+  curRotX = parseInt(this.value);
+  applyRot();
+});
+
+// drag to rotate too, cuz sliders are kinda meh on mobile
+var isDragging=false;
+var lastX=0, lastY=0;
+
+planeWrap.addEventListener('mousedown', function(e){
+  isDragging=true;
+  lastX = e.clientX;
+  lastY = e.clientY;
+});
+window.addEventListener('mouseup', function(){ isDragging=false; });
+window.addEventListener('mousemove', function(e){
+  if(!isDragging) return;
+  var dx = e.clientX - lastX;
+  var dy = e.clientY - lastY;
+  curRotY += dx*0.3;
+  curRotX -= dy*0.2;
+  // clamp so it doesnt flip out
+  if(curRotY>90) curRotY=90;
+  if(curRotY<-90) curRotY=-90;
+  if(curRotX>40) curRotX=40;
+  if(curRotX<-40) curRotX=-40;
+  rotYSlider.value = curRotY;
+  rotXSlider.value = curRotX;
+  applyRot();
+  lastX=e.clientX;
+  lastY=e.clientY;
+});
+
+// touch support for chromebook touchscreen / tablets
+planeWrap.addEventListener('touchstart', function(e){
+  isDragging=true;
+  lastX = e.touches[0].clientX;
+  lastY = e.touches[0].clientY;
+}, {passive:true});
+window.addEventListener('touchend', function(){ isDragging=false; });
+window.addEventListener('touchmove', function(e){
+  if(!isDragging) return;
+  var t = e.touches[0];
+  var dx = t.clientX - lastX;
+  var dy = t.clientY - lastY;
+  curRotY += dx*0.3;
+  curRotX -= dy*0.2;
+  if(curRotY>90) curRotY=90;
+  if(curRotY<-90) curRotY=-90;
+  if(curRotX>40) curRotX=40;
+  if(curRotX<-40) curRotX=-40;
+  rotYSlider.value = curRotY;
+  rotXSlider.value = curRotX;
+  applyRot();
+  lastX=t.clientX;
+  lastY=t.clientY;
+}, {passive:true});
+
+// reset button
+document.getElementById('resetBtn').addEventListener('click', function(){
+  curRotY = 0;
+  curRotX = 10;
+  rotYSlider.value = 0;
+  rotXSlider.value = 10;
+  applyRot();
+});
+
+// auto spin toggle, kinda fun ngl
+var spinning = false;
+var spinInterval = null;
+document.getElementById('spinBtn').addEventListener('click', function(){
+  spinning = !spinning;
+  this.textContent = spinning ? 'AUTO-SPIN: ON' : 'AUTO-SPIN: OFF';
+  if(spinning){
+    spinInterval = setInterval(function(){
+      curRotY += 0.6;
+      if(curRotY>180) curRotY-=360;
+      rotYSlider.value = curRotY;
+      applyRot();
+    }, 30);
+  } else {
+    clearInterval(spinInterval);
+  }
+});
+
+// yea thats basically it. gg
+console.log("b2 spirit page loaded - made by aniketh a r");
+</script>
+
+</body>
+</html>
